@@ -65,7 +65,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
     }
 
     public void initViews(View view) {
-        usernameEditText = view.findViewById(R.id.username_text);
+        usernameEditText = view.findViewById(R.id.lock_ssid_text);
         passwordEditText = view.findViewById(R.id.password_text);
 
         loginButton = view.findViewById(R.id.signup_button);
@@ -130,6 +130,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                                 }
                             });
                 }
+                break;
             }
         }
     }

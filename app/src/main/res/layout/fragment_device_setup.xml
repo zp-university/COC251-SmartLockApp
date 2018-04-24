@@ -22,7 +22,7 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/lock_found_text"
+            android:id="@+id/lock_name_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:height="@dimen/material_subheader_height"
@@ -34,52 +34,137 @@
             app:layout_constraintTop_toBottomOf="@+id/setup_title_text" />
 
         <ImageView
-            android:id="@+id/username_icon"
+            android:id="@+id/lock_icon"
             android:layout_width="@dimen/material_list_icon_size"
             android:layout_height="@dimen/material_list_icon_size"
             android:src="@drawable/ic_lock_black_24dp"
-            app:layout_constraintBottom_toBottomOf="@+id/username_text"
+            app:layout_constraintBottom_toBottomOf="@+id/lock_ssid_text"
             app:layout_constraintStart_toStartOf="@+id/guideline_16dp"
-            app:layout_constraintTop_toTopOf="@+id/username_text"
+            app:layout_constraintTop_toTopOf="@+id/lock_ssid_text"
             android:tint="@color/colorPrimary"/>
 
-        <EditText
-            android:id="@+id/username_text"
+        <TextView
+            android:id="@+id/lock_ssid_text"
             android:layout_width="0dp"
             android:layout_height="@dimen/material_list_single_line_without_avatar_normal_height"
             android:gravity="center_vertical"
             android:layout_marginEnd="@dimen/material_list_icon_last_position_margin_horizontal"
-            android:hint="Enter Username"
-            android:inputType="textNoSuggestions"
             android:background="@android:color/transparent"
+            android:text="Searching for Lock..."
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="@+id/guideline_72dp"
-            app:layout_constraintTop_toBottomOf="@+id/lock_found_text" />
+            app:layout_constraintTop_toBottomOf="@+id/lock_name_text" />
 
         <View
-            android:id="@+id/username_seperator"
+            android:id="@+id/lock_seperator"
             android:layout_width="wrap_content"
             android:layout_height="0.5dp"
             android:background="#d9d9d9"
-            app:layout_constraintTop_toBottomOf="@+id/username_text"
-            app:layout_constraintStart_toEndOf="@id/guideline_72dp"/>
+            app:layout_constraintTop_toBottomOf="@+id/lock_ssid_text"
+            app:layout_constraintStart_toEndOf="@+id/guideline_72dp"/>
+
+        <TextView
+            android:id="@+id/ssid_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:height="@dimen/material_subheader_height"
+            android:gravity="center"
+            android:text="Enter Home Wi-Fi Name (SSID)"
+            android:textColor="@color/material_subheader_text_color_default"
+            android:textSize="@dimen/material_subheader_text_size"
+            app:layout_constraintStart_toStartOf="@+id/guideline_16dp"
+            app:layout_constraintTop_toBottomOf="@+id/lock_seperator" />
+
+        <ImageView
+            android:id="@+id/ssid_icon"
+            android:layout_width="@dimen/material_list_icon_size"
+            android:layout_height="@dimen/material_list_icon_size"
+            android:src="@drawable/ic_wifi_black_24dp"
+            app:layout_constraintBottom_toBottomOf="@+id/ssid_edit"
+            app:layout_constraintStart_toStartOf="@+id/guideline_16dp"
+            app:layout_constraintTop_toTopOf="@+id/ssid_edit"
+            android:tint="@color/colorPrimary"/>
+
+        <EditText
+            android:id="@+id/ssid_edit"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/material_list_single_line_without_avatar_normal_height"
+            android:gravity="center_vertical"
+            android:layout_marginEnd="@dimen/material_list_icon_last_position_margin_horizontal"
+            android:background="@android:color/transparent"
+            android:hint="Enter Home Wi-Fi Name"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/guideline_72dp"
+            app:layout_constraintTop_toBottomOf="@+id/ssid_text" />
+
+        <View
+            android:id="@+id/ssid_seperator"
+            android:layout_width="wrap_content"
+            android:layout_height="0.5dp"
+            android:background="#d9d9d9"
+            app:layout_constraintTop_toBottomOf="@+id/ssid_edit"
+            app:layout_constraintStart_toStartOf="@+id/guideline_72dp"/>
+
+        <TextView
+            android:id="@+id/password_name_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:height="@dimen/material_subheader_height"
+            android:gravity="center"
+            android:text="Enter Home Wi-Fi Password"
+            android:textColor="@color/material_subheader_text_color_default"
+            android:textSize="@dimen/material_subheader_text_size"
+            app:layout_constraintStart_toStartOf="@+id/guideline_16dp"
+            app:layout_constraintTop_toBottomOf="@+id/ssid_seperator" />
+
+        <ImageView
+            android:id="@+id/password_icon"
+            android:layout_width="@dimen/material_list_icon_size"
+            android:layout_height="@dimen/material_list_icon_size"
+            android:src="@drawable/ic_lock_black_24dp"
+            app:layout_constraintBottom_toBottomOf="@+id/password_edit"
+            app:layout_constraintStart_toStartOf="@+id/guideline_16dp"
+            app:layout_constraintTop_toTopOf="@+id/password_edit"
+            android:tint="@color/colorPrimary"/>
+
+        <EditText
+            android:id="@+id/password_edit"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/material_list_single_line_without_avatar_normal_height"
+            android:gravity="center_vertical"
+            android:layout_marginEnd="@dimen/material_list_icon_last_position_margin_horizontal"
+            android:background="@android:color/transparent"
+            android:hint="Enter Home Wi-Fi Password"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/guideline_72dp"
+            app:layout_constraintTop_toBottomOf="@+id/password_name_text" />
+
+        <View
+            android:id="@+id/password_seperator"
+            android:layout_width="wrap_content"
+            android:layout_height="0.5dp"
+            android:background="#d9d9d9"
+            app:layout_constraintTop_toBottomOf="@+id/password_edit"
+            app:layout_constraintStart_toStartOf="@+id/guideline_72dp"/>
 
         <Button
-            android:id="@+id/signup_button"
+            android:id="@+id/setup_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="16dp"
-            android:text="Signup"
+            android:text="Finish"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/name_seperator"/>
+            app:layout_constraintTop_toBottomOf="@id/password_seperator"/>
 
         <android.support.constraint.Group
             android:id="@+id/wifiDetailsGroup"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:constraint_referenced_ids=""/>
+            android:visibility="invisible"
+            app:constraint_referenced_ids="ssid_text,ssid_icon,ssid_edit,ssid_seperator,
+                password_name_text,password_icon,password_edit,password_seperator,setup_button" />
 
         <android.support.constraint.Guideline
             android:id="@+id/guideline_16dp"

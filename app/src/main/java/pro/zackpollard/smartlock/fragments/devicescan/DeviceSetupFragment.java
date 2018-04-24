@@ -5,9 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.ScanResult;
+import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.constraint.Group;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -16,9 +18,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
-
-import com.google.gson.Gson;
-import com.jakewharton.retrofit2.adapter.rxjava2.HttpException;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,40 +26,39 @@ import java.util.List;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
-import okhttp3.ResponseBody;
 import pro.zackpollard.smartlock.MainActivity;
 import pro.zackpollard.smartlock.R;
 import pro.zackpollard.smartlock.retrofit.RetrofitInstance;
-import pro.zackpollard.smartlock.retrofit.models.Authentication;
-import pro.zackpollard.smartlock.retrofit.models.ErrorResponse;
+import pro.zackpollard.smartlock.retrofit.models.SetupDetails;
 import pro.zackpollard.smartlock.retrofit.models.Token;
 import pro.zackpollard.smartlock.utils.MinimalDisposableObserver;
-import pro.zackpollard.smartlock.utils.SharedPreferencesUtil;
 
 /**
  * Created by Zack on 11/9/2017.
  */
 
-public class DeviceScanFragment extends Fragment implements View.OnClickListener {
+public class DeviceSetupFragment extends Fragment implements View.OnClickListener {
 
     private CompositeDisposable subscriptions = new CompositeDisposable();
     private RetrofitInstance retrofitInstance;
 
     private MainActivity mainActivity;
 
-    private EditText usernameEditText;
+    private TextView lockSsidText;
+    private EditText ssidEditText;
     private EditText passwordEditText;
-
-    private Button loginButton;
+    private Button setupButton;
+    private Group wifiDetailsGroup;
 
     private BroadcastReceiver wifiScanReceiver;
+    private int wifiConfigId;
 
     private List<ScanResult> wifiList;
     private WifiManager wifi;
     int netCount=0;
 
-    public static DeviceScanFragment newInstance() {
-        DeviceScanFragment fragment = new DeviceScanFragment();
+    public static DeviceSetupFragment newInstance() {
+        DeviceSetupFragment fragment = new DeviceSetupFragment();
         return fragment;
     }
 
@@ -77,15 +76,29 @@ public class DeviceScanFragment extends Fragment implements View.OnClickListener
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
         wifi = (WifiManager) getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
     }
 
     private void updateResultsList() {
         wifiList = wifi.getScanResults();
         for(ScanResult scanResult : new ArrayList<>(wifiList)) {
-            if(!scanResult.SSID.startsWith("SMARTLOCK-")) {
-                wifiList.remove(scanResult);
+            if(scanResult.SSID.startsWith("SMARTLOCK-")) {
+                try {
+                    getActivity().unregisterReceiver(wifiScanReceiver);
+                } catch(IllegalArgumentException e) {
+                }
+
+                lockSsidText.setText(scanResult.SSID);
+
+                WifiConfiguration wifiConfig = new WifiConfiguration();
+                wifiConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+                wifiConfig.SSID = "\"" + scanResult.SSID + "\"";
+
+                wifi.disconnect();
+                wifiConfigId = wifi.addNetwork(wifiConfig);
+                wifi.enableNetwork(wifiConfigId, true);
+
+                wifiDetailsGroup.setVisibility(View.VISIBLE);
             }
         }
         netCount = wifiList.size();
@@ -95,7 +108,7 @@ public class DeviceScanFragment extends Fragment implements View.OnClickListener
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_login, container, false);
+        View view = inflater.inflate(R.layout.fragment_device_setup, container, false);
         mainActivity = (MainActivity) getActivity();
         retrofitInstance = new RetrofitInstance(view.getContext());
         initViews(view);
@@ -104,14 +117,18 @@ public class DeviceScanFragment extends Fragment implements View.OnClickListener
     }
 
     public void initViews(View view) {
-        usernameEditText = view.findViewById(R.id.username_text);
-        passwordEditText = view.findViewById(R.id.password_text);
+        lockSsidText = view.findViewById(R.id.lock_ssid_text);
 
-        loginButton = view.findViewById(R.id.signup_button);
+        ssidEditText = view.findViewById(R.id.ssid_edit);
+        passwordEditText = view.findViewById(R.id.password_edit);
+
+        setupButton = view.findViewById(R.id.setup_button);
+
+        wifiDetailsGroup = view.findViewById(R.id.wifiDetailsGroup);
     }
 
     public void registerListeners() {
-        loginButton.setOnClickListener(this);
+        setupButton.setOnClickListener(this);
     }
 
     @Override
@@ -135,46 +152,36 @@ public class DeviceScanFragment extends Fragment implements View.OnClickListener
     @Override
     public void onClick(final View view) {
         switch (view.getId()) {
-            case R.id.signup_button: {
-                if (usernameEditText.getText().toString().isEmpty()) {
-                    Snackbar.make(view, "Username must be entered to signup!", Snackbar.LENGTH_LONG).show();
-                } else if (passwordEditText.getText().toString().isEmpty()) {
-                    Snackbar.make(view, "Password must be entered to signup!", Snackbar.LENGTH_LONG).show();
+            case R.id.setup_button: {
+                if(ssidEditText.getText().toString().isEmpty()) {
+                    Snackbar.make(view, "SSID must be entered to complete setup!", Snackbar.LENGTH_LONG).show();
+                } else if(passwordEditText.getText().toString().isEmpty()) {
+                    Snackbar.make(view, "Password must be entered to complete setup!", Snackbar.LENGTH_LONG).show();
                 } else {
-                    Authentication auth = new Authentication();
-                    auth.setUsername(usernameEditText.getText().toString());
-                    auth.setPassword(passwordEditText.getText().toString());
-
-                    ((MainActivity) view.getContext()).showLoadingBar();
-
-                    retrofitInstance.loginAPI().login(auth)
+                    SetupDetails setupDetails = new SetupDetails();
+                    setupDetails.setWifiSsid(ssidEditText.getText().toString());
+                    setupDetails.setWifiPassword(passwordEditText.getText().toString());
+                    setupDetails.setJwtToken("Hehe, this is a JWT, it can't see, because it isn't me!");
+                    //TODO: Deal with JWT business
+                    retrofitInstance.setupAPI().sendSetupDetails(setupDetails)
                             .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribe(new MinimalDisposableObserver<Token>() {
                                 @Override
                                 public void onNext(Token token) {
-                                    Snackbar.make(view, token.getToken(), Snackbar.LENGTH_LONG).show();
-                                    mainActivity.hideLoadingBar();
-                                    SharedPreferencesUtil.addKeyValue(view.getContext(), SharedPreferencesUtil.USER_TOKEN, token.getToken());
+                                    super.onNext(token);
+                                    Snackbar.make(view, "Completed!", Snackbar.LENGTH_LONG).show();
                                 }
 
                                 @Override
                                 public void onError(Throwable e) {
-                                    mainActivity.hideLoadingBar();
-                                    Log.e("ERROR", "onError: ", e);
-                                    String errorString = e.getLocalizedMessage();
-                                    if(e instanceof HttpException) {
-                                        ResponseBody responseBody = ((HttpException) e).response().errorBody();
-                                        if(responseBody != null) {
-                                            ErrorResponse error = new Gson().fromJson(responseBody.charStream(), ErrorResponse.class);
-                                            errorString = error.getMessage();
-                                        }
-                                    }
-
-                                    Snackbar.make(view, errorString, Snackbar.LENGTH_LONG).show();
+                                    super.onError(e);
+                                    Log.e("SETUP", "Error", e);
                                 }
                             });
                 }
+
+                break;
             }
         }
     }
