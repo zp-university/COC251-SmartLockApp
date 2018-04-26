@@ -2,7 +2,7 @@ package pro.zackpollard.smartlock.retrofit.apis;
 
 
 import io.reactivex.Observable;
-import pro.zackpollard.smartlock.retrofit.models.Token;
+import pro.zackpollard.smartlock.retrofit.models.DeviceUuid;
 import pro.zackpollard.smartlock.retrofit.models.SetupDetails;
 import pro.zackpollard.smartlock.retrofit.models.SetupStatus;
 import retrofit2.http.Body;
@@ -15,5 +15,5 @@ public interface SetupAPI {
     Observable<SetupStatus> getSetupStatus();
 
     @POST("/api/v1/setup/details")
-    Observable<Token> sendSetupDetails(@Body SetupDetails body);
+    Observable<DeviceUuid> sendSetupDetails(@Body SetupDetails body);
 }

@@ -9,12 +9,13 @@ import java.io.IOException;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Response;
+import pro.zackpollard.smartlock.BuildConfig;
 import pro.zackpollard.smartlock.retrofit.apis.LoginAPI;
+import pro.zackpollard.smartlock.retrofit.apis.SetupAPI;
+import pro.zackpollard.smartlock.retrofit.apis.UserAPI;
+import pro.zackpollard.smartlock.utils.SharedPreferencesUtil;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
-import pro.zackpollard.smartlock.BuildConfig;
-import pro.zackpollard.smartlock.retrofit.apis.SetupAPI;
-import pro.zackpollard.smartlock.utils.SharedPreferencesUtil;
 
 public class RetrofitInstance {
 
@@ -23,6 +24,7 @@ public class RetrofitInstance {
 
     private SetupAPI setupAPI;
     private LoginAPI loginAPI;
+    private UserAPI userAPI;
 
     public RetrofitInstance(final Context context) {
 
@@ -70,6 +72,13 @@ public class RetrofitInstance {
             loginAPI = mainRetrofit.create(LoginAPI.class);
         }
         return loginAPI;
+    }
+
+    public UserAPI userAPI() {
+        if (userAPI == null) {
+            userAPI = mainRetrofit.create(UserAPI.class);
+        }
+        return userAPI;
     }
 
     private class HeaderInterceptor implements Interceptor {

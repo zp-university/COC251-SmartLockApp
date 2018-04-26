@@ -22,15 +22,22 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.functions.Function;
+import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 import pro.zackpollard.smartlock.MainActivity;
 import pro.zackpollard.smartlock.R;
 import pro.zackpollard.smartlock.retrofit.RetrofitInstance;
+import pro.zackpollard.smartlock.retrofit.models.Device;
+import pro.zackpollard.smartlock.retrofit.models.DeviceUuid;
 import pro.zackpollard.smartlock.retrofit.models.SetupDetails;
-import pro.zackpollard.smartlock.retrofit.models.Token;
+import pro.zackpollard.smartlock.retrofit.models.SetupStatus;
 import pro.zackpollard.smartlock.utils.MinimalDisposableObserver;
 
 /**
@@ -158,25 +165,63 @@ public class DeviceSetupFragment extends Fragment implements View.OnClickListene
                 } else if(passwordEditText.getText().toString().isEmpty()) {
                     Snackbar.make(view, "Password must be entered to complete setup!", Snackbar.LENGTH_LONG).show();
                 } else {
+                    mainActivity.showLoadingBar();
                     SetupDetails setupDetails = new SetupDetails();
                     setupDetails.setWifiSsid(ssidEditText.getText().toString());
                     setupDetails.setWifiPassword(passwordEditText.getText().toString());
-                    setupDetails.setJwtToken("Hehe, this is a JWT, it can't see, because it isn't me!");
-                    //TODO: Deal with JWT business
-                    retrofitInstance.setupAPI().sendSetupDetails(setupDetails)
+                    subscriptions.add(retrofitInstance.setupAPI().sendSetupDetails(setupDetails)
                             .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
-                            .subscribe(new MinimalDisposableObserver<Token>() {
+                            .subscribeWith(new MinimalDisposableObserver<DeviceUuid>() {
                                 @Override
-                                public void onNext(Token token) {
-                                    super.onNext(token);
-                                    Snackbar.make(view, "Completed!", Snackbar.LENGTH_LONG).show();
+                                public void onNext(DeviceUuid uuid) {
+                                    subscriptions.add(retrofitInstance.userAPI().userAddDevice(uuid)
+                                            .subscribeOn(Schedulers.io())
+                                            .observeOn(AndroidSchedulers.mainThread())
+                                            .subscribeWith(new MinimalDisposableObserver<Device>() {
+                                                @Override
+                                                public void onNext(Device device) {
+                                                    Snackbar.make(view, "Successfully setup device " + device.getName() + " on your account!", Snackbar.LENGTH_LONG).show();
+                                                }
+                                            })
+                                    );
                                 }
 
                                 @Override
                                 public void onError(Throwable e) {
                                     super.onError(e);
                                     Log.e("SETUP", "Error", e);
+                                }
+                            }));
+                    retrofitInstance.setupAPI().getSetupStatus()
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .repeatWhen(new Function<Observable<Object>, ObservableSource<?>>() {
+                                @Override
+                                public ObservableSource<?> apply(Observable<Object> objectObservable) throws Exception {
+                                    return objectObservable.delay(1, TimeUnit.SECONDS);
+                                }
+                            })
+                            .takeUntil(new Predicate<SetupStatus>() {
+                                @Override
+                                public boolean test(SetupStatus setupStatus) throws Exception {
+                                    if (setupStatus.getStatus().equals("failed") || setupStatus.getStatus().equals("completed")) {
+                                        return true;
+                                    }
+                                    return false;
+                                }
+                            })
+                            .subscribe(new MinimalDisposableObserver<SetupStatus>() {
+                                @Override
+                                public void onNext(SetupStatus setupStatus) {
+                                    if(setupStatus.getStatus().equals("failed")) {
+                                        mainActivity.hideLoadingBar();
+                                        Snackbar.make(view, "Setup failed, the provided details were incorrect!", Snackbar.LENGTH_LONG).show();
+                                        subscriptions.clear();
+                                    } else if(setupStatus.getStatus().equals("completed")) {
+                                        mainActivity.hideLoadingBar();
+                                        Snackbar.make(view, "Setup succeeded!", Snackbar.LENGTH_LONG).show();
+                                    }
                                 }
                             });
                 }
