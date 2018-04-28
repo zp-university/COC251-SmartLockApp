@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.v4.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -22,7 +21,7 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/username_title"
+            android:id="@+id/username_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:height="@dimen/material_subheader_height"
@@ -34,7 +33,7 @@
             app:layout_constraintTop_toBottomOf="@+id/signup_title_text" />
 
         <ImageView
-            android:id="@+id/lock_icon"
+            android:id="@+id/username_icon"
             android:layout_width="@dimen/material_list_icon_size"
             android:layout_height="@dimen/material_list_icon_size"
             android:src="@drawable/ic_person_black_24dp"
@@ -54,7 +53,7 @@
             android:background="@android:color/transparent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="@+id/guideline_72dp"
-            app:layout_constraintTop_toBottomOf="@+id/username_title" />
+            app:layout_constraintTop_toBottomOf="@+id/username_text" />
 
         <View
             android:id="@+id/lock_seperator"
@@ -238,7 +237,5 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             app:layout_constraintGuide_begin="@dimen/material_list_text_second_position_edge_margin_start" />
-
-
     </android.support.constraint.ConstraintLayout>
 </android.support.v4.widget.NestedScrollView>

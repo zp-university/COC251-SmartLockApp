@@ -12,10 +12,9 @@ import android.view.WindowManager;
 import android.widget.ProgressBar;
 
 import io.reactivex.disposables.CompositeDisposable;
-import pro.zackpollard.smartlock.fragments.devicescan.DeviceSetupFragment;
-import pro.zackpollard.smartlock.fragments.login.LoginFragment;
+import pro.zackpollard.smartlock.fragments.devicesetup.DeviceSetupFragment;
+import pro.zackpollard.smartlock.fragments.home.HomeFragment;
 import pro.zackpollard.smartlock.fragments.loginsignup.LoginSignupFragment;
-import pro.zackpollard.smartlock.fragments.signup.SignupFragment;
 import pro.zackpollard.smartlock.utils.SharedPreferencesUtil;
 
 public class MainActivity extends AppCompatActivity {
@@ -47,16 +46,7 @@ public class MainActivity extends AppCompatActivity {
         int navigationVisiblity = View.VISIBLE;
         switch (navigationId) {
             case R.id.navigation_home:
-                selectedFragment = SignupFragment.newInstance();
-                break;
-            case R.id.navigation_dashboard:
-                selectedFragment = LoginFragment.newInstance();
-                break;
-            case R.id.navigation_people:
-                selectedFragment = DeviceSetupFragment.newInstance();
-                break;
-            case R.id.navigation_dropups:
-                selectedFragment = LoginSignupFragment.newInstance();
+                selectedFragment = HomeFragment.newInstance();
                 break;
             case R.layout.fragment_login_signup:
                 selectedFragment = LoginSignupFragment.newInstance();

@@ -12,7 +12,6 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.google.gson.Gson;
-import com.jakewharton.retrofit2.adapter.rxjava2.HttpException;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
@@ -26,6 +25,7 @@ import pro.zackpollard.smartlock.retrofit.models.Token;
 import pro.zackpollard.smartlock.retrofit.models.User;
 import pro.zackpollard.smartlock.utils.MinimalDisposableObserver;
 import pro.zackpollard.smartlock.utils.SharedPreferencesUtil;
+import retrofit2.HttpException;
 
 /**
  * Created by Zack on 11/9/2017.

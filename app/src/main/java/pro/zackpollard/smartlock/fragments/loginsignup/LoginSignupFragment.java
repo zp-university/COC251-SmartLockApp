@@ -2,35 +2,14 @@ package pro.zackpollard.smartlock.fragments.loginsignup;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentPagerAdapter;
-import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.EditText;
 
-import com.google.gson.Gson;
-import com.jakewharton.retrofit2.adapter.rxjava2.HttpException;
-
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.schedulers.Schedulers;
-import okhttp3.ResponseBody;
-import pro.zackpollard.smartlock.MainActivity;
 import pro.zackpollard.smartlock.R;
-import pro.zackpollard.smartlock.retrofit.RetrofitInstance;
-import pro.zackpollard.smartlock.retrofit.models.Authentication;
-import pro.zackpollard.smartlock.retrofit.models.ErrorResponse;
-import pro.zackpollard.smartlock.retrofit.models.Token;
-import pro.zackpollard.smartlock.utils.MinimalDisposableObserver;
-import pro.zackpollard.smartlock.utils.SharedPreferencesUtil;
 
 /**
  * Created by Zack on 11/9/2017.

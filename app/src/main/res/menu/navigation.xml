@@ -5,20 +5,4 @@
         android:id="@+id/navigation_home"
         android:icon="@drawable/ic_home_black_24dp"
         android:title="@string/title_home" />
-
-    <item
-        android:id="@+id/navigation_dashboard"
-        android:icon="@drawable/ic_dashboard_black_24dp"
-        android:title="@string/title_dashboard" />
-
-    <item
-        android:id="@+id/navigation_people"
-        android:icon="@drawable/ic_person_black_24dp"
-        android:title="@string/title_people" />
-
-    <item
-        android:id="@+id/navigation_dropups"
-        android:icon="@drawable/ic_dropup_black_24dp"
-        android:title="@string/title_dropups" />
-
 </menu>

@@ -1,9 +1,10 @@
-package pro.zackpollard.smartlock.fragments.devicescan;
+package pro.zackpollard.smartlock.fragments.devicesetup;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.NetworkInfo;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
@@ -58,11 +59,15 @@ public class DeviceSetupFragment extends Fragment implements View.OnClickListene
     private Group wifiDetailsGroup;
 
     private BroadcastReceiver wifiScanReceiver;
-    private int wifiConfigId;
+    private BroadcastReceiver wifiChangeReceiver;
 
     private List<ScanResult> wifiList;
     private WifiManager wifi;
-    int netCount=0;
+    private int netCount=0;
+    private int currentNetworkId;
+    private int newNetworkId;
+
+    DeviceUuid deviceUuid;
 
     public static DeviceSetupFragment newInstance() {
         DeviceSetupFragment fragment = new DeviceSetupFragment();
@@ -78,12 +83,49 @@ public class DeviceSetupFragment extends Fragment implements View.OnClickListene
                 updateResultsList();
             }
         };
+        wifiChangeReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(final Context context, Intent intent) {
+                Log.d("DeviceSetupFragment", "WifiChangeReceiver called");
+                if(((NetworkInfo) intent.getParcelableExtra((WifiManager.EXTRA_NETWORK_INFO))).isConnected()) {
+                    mainActivity.unregisterReceiver(wifiChangeReceiver);
+                    Observable.timer(5, TimeUnit.SECONDS)
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribe(new MinimalDisposableObserver<Long>() {
+                                @Override
+                                public void onNext(Long aLong) {
+                                    retrofitInstance.userAPI()
+                                            .userAddDevice(deviceUuid)
+                                            .subscribeOn(Schedulers.io())
+                                            .observeOn(AndroidSchedulers.mainThread())
+                                            .subscribe(new MinimalDisposableObserver<Device>() {
+                                                @Override
+                                                public void onNext (Device device){
+                                                    Log.d("DeviceSetupFragment", "onNext called " + device);
+                                                }
+
+                                                @Override
+                                                public void onError (Throwable e){
+                                                    Log.e("DeviceSetupFragment", "onError: Error", e);
+                                                }
+
+                                                @Override
+                                                public void onComplete () {
+                                                    Log.e("DeviceSetupFragment", "onComplete: Complete");
+                                                }
+                                            });
+                                }
+                            });
+                }
+            }
+        };
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        wifi = (WifiManager) getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        wifi = (WifiManager) mainActivity.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
     }
 
     private void updateResultsList() {
@@ -91,7 +133,7 @@ public class DeviceSetupFragment extends Fragment implements View.OnClickListene
         for(ScanResult scanResult : new ArrayList<>(wifiList)) {
             if(scanResult.SSID.startsWith("SMARTLOCK-")) {
                 try {
-                    getActivity().unregisterReceiver(wifiScanReceiver);
+                    mainActivity.unregisterReceiver(wifiScanReceiver);
                 } catch(IllegalArgumentException e) {
                 }
 
@@ -101,11 +143,18 @@ public class DeviceSetupFragment extends Fragment implements View.OnClickListene
                 wifiConfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
                 wifiConfig.SSID = "\"" + scanResult.SSID + "\"";
 
-                wifi.disconnect();
-                wifiConfigId = wifi.addNetwork(wifiConfig);
-                wifi.enableNetwork(wifiConfigId, true);
+                currentNetworkId = wifi.getConnectionInfo().getNetworkId();
 
-                wifiDetailsGroup.setVisibility(View.VISIBLE);
+                wifi.disconnect();
+                newNetworkId = wifi.addNetwork(wifiConfig);
+                wifi.enableNetwork(newNetworkId, true);
+
+                mainActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        wifiDetailsGroup.setVisibility(View.VISIBLE);
+                    }
+                });
             }
         }
         netCount = wifiList.size();
@@ -145,15 +194,19 @@ public class DeviceSetupFragment extends Fragment implements View.OnClickListene
 
         if(wifi.getWifiState() == WifiManager.WIFI_STATE_ENABLED) {
 
-            getActivity().registerReceiver(wifiScanReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+            mainActivity.registerReceiver(wifiScanReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
         }
     }
 
     @Override
     public void onPause() {
         super.onPause();
+        Log.d("DeviceSetupFragment", "onPause: Called");
         subscriptions.clear();
-        getActivity().unregisterReceiver(wifiScanReceiver);
+        try {
+            mainActivity.unregisterReceiver(wifiScanReceiver);
+        } catch(IllegalArgumentException e) {
+        }
     }
 
     @Override
@@ -175,25 +228,18 @@ public class DeviceSetupFragment extends Fragment implements View.OnClickListene
                             .subscribeWith(new MinimalDisposableObserver<DeviceUuid>() {
                                 @Override
                                 public void onNext(DeviceUuid uuid) {
-                                    subscriptions.add(retrofitInstance.userAPI().userAddDevice(uuid)
-                                            .subscribeOn(Schedulers.io())
-                                            .observeOn(AndroidSchedulers.mainThread())
-                                            .subscribeWith(new MinimalDisposableObserver<Device>() {
-                                                @Override
-                                                public void onNext(Device device) {
-                                                    Snackbar.make(view, "Successfully setup device " + device.getName() + " on your account!", Snackbar.LENGTH_LONG).show();
-                                                }
-                                            })
-                                    );
+                                    deviceUuid = uuid;
                                 }
 
                                 @Override
                                 public void onError(Throwable e) {
                                     super.onError(e);
                                     Log.e("SETUP", "Error", e);
+                                    subscriptions.clear();
+                                    mainActivity.hideLoadingBar();
                                 }
                             }));
-                    retrofitInstance.setupAPI().getSetupStatus()
+                    subscriptions.add(retrofitInstance.setupAPI().getSetupStatus()
                             .subscribeOn(Schedulers.io())
                             .observeOn(AndroidSchedulers.mainThread())
                             .repeatWhen(new Function<Observable<Object>, ObservableSource<?>>() {
@@ -211,7 +257,7 @@ public class DeviceSetupFragment extends Fragment implements View.OnClickListene
                                     return false;
                                 }
                             })
-                            .subscribe(new MinimalDisposableObserver<SetupStatus>() {
+                            .subscribeWith(new MinimalDisposableObserver<SetupStatus>() {
                                 @Override
                                 public void onNext(SetupStatus setupStatus) {
                                     if(setupStatus.getStatus().equals("failed")) {
@@ -220,10 +266,14 @@ public class DeviceSetupFragment extends Fragment implements View.OnClickListene
                                         subscriptions.clear();
                                     } else if(setupStatus.getStatus().equals("completed")) {
                                         mainActivity.hideLoadingBar();
-                                        Snackbar.make(view, "Setup succeeded!", Snackbar.LENGTH_LONG).show();
+                                        wifi.removeNetwork(newNetworkId);
+                                        wifi.disconnect();
+                                        mainActivity.registerReceiver(wifiChangeReceiver, new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION));
+                                        wifi.enableNetwork(currentNetworkId, true);
                                     }
                                 }
-                            });
+                            })
+                    );
                 }
 
                 break;

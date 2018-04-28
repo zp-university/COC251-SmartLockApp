@@ -2,19 +2,20 @@ package pro.zackpollard.smartlock.retrofit;
 
 import android.content.Context;
 
-import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
-
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Response;
+import okhttp3.logging.HttpLoggingInterceptor;
 import pro.zackpollard.smartlock.BuildConfig;
 import pro.zackpollard.smartlock.retrofit.apis.LoginAPI;
 import pro.zackpollard.smartlock.retrofit.apis.SetupAPI;
 import pro.zackpollard.smartlock.retrofit.apis.UserAPI;
 import pro.zackpollard.smartlock.utils.SharedPreferencesUtil;
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RetrofitInstance {
@@ -35,7 +36,7 @@ public class RetrofitInstance {
     private void initSetupRetrofit() {
         final OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient.Builder();
 
-        OkHttpClient okHttpClient = okHttpClientBuilder.build();
+        OkHttpClient okHttpClient = okHttpClientBuilder.readTimeout(60, TimeUnit.SECONDS).build();
 
         Retrofit.Builder builder = new Retrofit.Builder()
                 .baseUrl(BuildConfig.SETUP_API_URL)
@@ -49,6 +50,11 @@ public class RetrofitInstance {
         final OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient.Builder();
 
         okHttpClientBuilder.addInterceptor(new HeaderInterceptor(context));
+
+        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
+        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+
+        okHttpClientBuilder.addInterceptor(interceptor);
 
         OkHttpClient okHttpClient = okHttpClientBuilder.build();
 
@@ -94,7 +100,7 @@ public class RetrofitInstance {
 
             return chain.proceed(chain.request()
                     .newBuilder()
-                    .addHeader("Bearer", SharedPreferencesUtil.getStringValue(context, SharedPreferencesUtil.USER_TOKEN))
+                    .addHeader("Authorization", "Bearer " + SharedPreferencesUtil.getStringValue(context, SharedPreferencesUtil.USER_TOKEN))
                     .build()
             );
         }

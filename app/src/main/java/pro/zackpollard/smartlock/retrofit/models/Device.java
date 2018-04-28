@@ -13,6 +13,10 @@ public class Device {
     @Expose
     private String uuid;
 
+    @SerializedName("locked")
+    @Expose
+    private Boolean locked;
+
     public String getName() {
         return name;
     }
@@ -27,5 +31,13 @@ public class Device {
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
+    }
+
+    public Boolean isLocked() {
+        return locked;
+    }
+
+    public void setLocked(Boolean locked) {
+        this.locked = locked;
     }
 }
