@@ -5,6 +5,7 @@ import android.content.Context;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+import okhttp3.CertificatePinner;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Response;
@@ -50,6 +51,12 @@ public class RetrofitInstance {
         final OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient.Builder();
 
         okHttpClientBuilder.addInterceptor(new HeaderInterceptor(context));
+
+        CertificatePinner certificatePinner = new CertificatePinner.Builder()
+                .add("smartlockapp.zackpollard.pro", "sha256/YLh1dUR9y6Kja30RrAn7JKnbQG/uEtLMkBgFF2Fuihg=")
+                .build();
+
+        okHttpClientBuilder.certificatePinner(certificatePinner);
 
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
         interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
