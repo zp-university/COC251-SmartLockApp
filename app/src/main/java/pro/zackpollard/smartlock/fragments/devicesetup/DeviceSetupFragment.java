@@ -102,6 +102,7 @@ public class DeviceSetupFragment extends Fragment implements View.OnClickListene
                                             .subscribe(new MinimalDisposableObserver<Device>() {
                                                 @Override
                                                 public void onNext (Device device){
+                                                    mainActivity.navigateToFragment(R.id.navigation_home);
                                                     Log.d("DeviceSetupFragment", "onNext called " + device);
                                                 }
 
@@ -112,6 +113,7 @@ public class DeviceSetupFragment extends Fragment implements View.OnClickListene
 
                                                 @Override
                                                 public void onComplete () {
+                                                    mainActivity.hideLoadingBar();
                                                     Log.e("DeviceSetupFragment", "onComplete: Complete");
                                                 }
                                             });
@@ -265,7 +267,6 @@ public class DeviceSetupFragment extends Fragment implements View.OnClickListene
                                         Snackbar.make(view, "Setup failed, the provided details were incorrect!", Snackbar.LENGTH_LONG).show();
                                         subscriptions.clear();
                                     } else if(setupStatus.getStatus().equals("completed")) {
-                                        mainActivity.hideLoadingBar();
                                         wifi.removeNetwork(newNetworkId);
                                         wifi.disconnect();
                                         mainActivity.registerReceiver(wifiChangeReceiver, new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION));
